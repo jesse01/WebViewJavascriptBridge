@@ -5,23 +5,23 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
 
 1. 复制WVJBWebViewClient.java 到 Android 项目 src 下的一个子目录中, 按需修改package名称;
 2. 复制WebViewJavascriptBridge.js.txt到assets目录;
-3. 创建WVJBWebViewClient子类使用, 例如:
+3. 子类化 WVJBWebViewClient, 例如:
 
   class MyWebViewClient extends WVJBWebViewClient {
 		public MyWebViewClient(WebView webView) {
 
 			//需要支持JS send 方法时
 			super(webView, new WVJBWebViewClient.WVJBHandler() {
-  			@Override
-  			public void request(Object data, WVJBResponseCallback callback) {		
-  			  //处理代码
-  			}
-  		});
+  				@Override
+  				public void request(Object data, WVJBResponseCallback callback) {		
+  			  		//处理代码
+  				}
+  			});
 			
-  	  /*
-  	  //不需要支持JS send 方法时
-  	  super(webView);
-  	  */  
+	  	  	/*
+  		  	//不需要支持JS send 方法时
+  	  		super(webView);
+  	  		*/  
 		}
 
 		@Override
@@ -39,13 +39,32 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
 4. 设置WebView
   webView.setWebViewClient(new MyWebViewClient(webView));  
 
-stringByEvaluatingJavaScriptFromString 方法:
-  stringByEvaluatingJavaScriptFromString返回字符串接果, 参数必须是能够返回字串符串的方法. 
+5. excuteJavascript 方法执行脚本:
+
+  excuteJavascript(script); //不需要返回值, script前不要加javascript:前缀
+
+ 或
+ 
+  excuteJavascript(script, callback); //需要返回值, script前不要加javascript:前缀
+
+  当需要返回值时, Android 4.4及更高版本使用WebView.evaluateJavascript方法; 4.4以前版本调用 mWebViewCore.stringByEvaluatingJavaScriptFromString 内部方法, 该方法要求Javascript方法必须能返回字符串. 
   
-  String height = stringByEvaluatingJavaScriptFromString("document.body.offsetHeight"); //错误, 将返回null
-  String height = stringByEvaluatingJavaScriptFromString("eval(document.body.offsetHeight).toString()"); //正确
+  如:
+  excuteJavascript("document.body.offsetHeight", new JavascriptCallback() {
+        public void onReceiveValue(String height) {
+           //错误, height=null
+        }
+  }); 
+ excuteJavascript("eval(document.body.offsetHeight).toString()", new JavascriptCallback() {
+        public void onReceiveValue(String height) {
+           //正确
+        }
+  }); 
   
-  如果不需JS返回值, 建议仍使用loadUrl方法.
-  
+  不需要返回值时可以直接调用:
+  excuteJavascript("location.href='http://www.baidu.com/'”);
+
+  Android 4.4及更高版本使用WebView.evaluateJavascript方法, 低于4.4版本使用WebView.loadUrl()方法
+
   
   WebViewJavascriptBridge for iOS/OSX 的下载地址: https://github.com/jcccn/WebViewJavascriptBridge
