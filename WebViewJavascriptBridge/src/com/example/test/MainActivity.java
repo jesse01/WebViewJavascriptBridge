@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
 	class MyWebViewClient extends WVJBWebViewClient {
 		public MyWebViewClient(WebView webView) {
 
-			//支持JS发送普通消息
+			//支锟斤拷JS锟斤拷锟斤拷锟斤拷通锟斤拷息
 			super(webView, new WVJBWebViewClient.WVJBHandler() {
 			
 				@Override
@@ -81,7 +81,7 @@ public class MainActivity extends Activity {
 			});
 			
 			/*
-			// 不支持JS发送普通消息
+			// 锟斤拷支锟斤拷JS锟斤拷锟斤拷锟斤拷通锟斤拷息
 			super(webView);
 			*/  
 			
@@ -120,9 +120,6 @@ public class MainActivity extends Activity {
 
 		@Override
 		public void onPageFinished(WebView view, String url) {
-			String height = stringByEvaluatingJavaScriptFromString("eval(document.body.offsetHeight)"); //正确
-			log("height", height);
-
 			super.onPageFinished(view, url);
 		}
 

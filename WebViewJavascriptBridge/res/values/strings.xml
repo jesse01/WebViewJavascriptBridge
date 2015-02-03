@@ -3,5 +3,7 @@
 
     <string name="app_name">Test</string>
     <string name="hello_world">Hello world!</string>
+    <string name="send_message">Send message</string>
+    <string name="call_handler">Call handler</string>
 
 </resources>

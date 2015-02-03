@@ -16,10 +16,11 @@ import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
+import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint({ "SetJavaScriptEnabled", "NewApi" })
 public class WVJBWebViewClient extends WebViewClient {
 	
 	private static final String kTag = "WVJB";
@@ -126,13 +127,13 @@ public class WVJBWebViewClient extends WebViewClient {
         log("SEND",messageJSON);
 
         if(Looper.myLooper() == Looper.getMainLooper()) {
-            webView.loadUrl("javascript:WebViewJavascriptBridge._handleMessageFromObjC('"+messageJSON+"');");        	
+        	executeJavascript("WebViewJavascriptBridge._handleMessageFromObjC('"+messageJSON+"');");        	
         } else {
         	final String msgString = messageJSON;
         	new Runnable() {
 		        @Override
 		        public void run() {
-		            webView.loadUrl("javascript:WebViewJavascriptBridge._handleMessageFromObjC('"+msgString+"');");        	
+		        	executeJavascript("WebViewJavascriptBridge._handleMessageFromObjC('"+msgString+"');");        	
 		        }
 		    };        	
         }
@@ -187,8 +188,16 @@ public class WVJBWebViewClient extends WebViewClient {
     }
 
     private void flushMessageQueue()  {
-        String messageQueueString = stringByEvaluatingJavaScriptFromString("WebViewJavascriptBridge._fetchQueue()");
-        if(messageQueueString == null || messageQueueString.length() == 0) return;
+    	String script = "WebViewJavascriptBridge._fetchQueue()";
+    	executeJavascript(script, new JavascriptCallback() {
+            public void onReceiveValue(String messageQueueString) {
+                if(messageQueueString == null || messageQueueString.length() == 0) return;
+                processQueueMessage(messageQueueString);        	
+            }
+    	});
+    }
+    
+    private void processQueueMessage(String messageQueueString) {
 		try {
 	        JSONArray messages = new JSONArray(messageQueueString);
 	        for (int i = 0; i < messages.length(); i++) {
@@ -235,7 +244,7 @@ public class WVJBWebViewClient extends WebViewClient {
     
     void log(String action, Object json) {
         if (!logging) return;
-        String jsonString = json.toString();
+        String jsonString = String.valueOf(json);
         if (jsonString.length() > 500) {
         	Log.i(kTag, action+": "+ jsonString.substring(0, 500) + " [...]");
         } else {
@@ -243,12 +252,39 @@ public class WVJBWebViewClient extends WebViewClient {
         }
     }
 
-	public String stringByEvaluatingJavaScriptFromString(String script) {
-        try {
+	public void executeJavascript(String script) {
+		executeJavascript(script, null);
+	}
+
+	public void executeJavascript(String script, final JavascriptCallback callback) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView.evaluateJavascript(script, new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                	if(callback!=null) {
+                    	if(value != null && value.startsWith("\"") && value.endsWith("\"")) {
+                    		value = value.substring(1,value.length()-1).replaceAll("\\\\", "");
+                    	}  
+                    	callback.onReceiveValue(value);
+                	}
+                }
+            });
+        } else {
+        	if(callback!=null) {
+        		String value=stringByEvaluatingJavaScriptFromString(script);
+            	callback.onReceiveValue(value);
+        	} else {
+            	webView.loadUrl("javascript:"+script);  		
+        	}
+        }
+	}
+	
+	private String stringByEvaluatingJavaScriptFromString(String script) {
+		try {
         	if(browserFrame == null || methodCallJavascript == null) {
         		Object webViewObject;
         		Field wc;
-                if (Build.VERSION.SDK_INT >= 16) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 	Field mp = WebView.class.getDeclaredField("mProvider");
                 	mp.setAccessible(true);
                 	webViewObject = mp.get(webView);
@@ -282,7 +318,7 @@ public class WVJBWebViewClient extends WebViewClient {
             is.read(buffer);  
             is.close();  
             String js = new String(buffer);
-            webView.loadUrl("javascript:"+js);
+            executeJavascript(js);
         } catch (IOException e) {
         	e.printStackTrace();
         }  		    	
@@ -314,5 +350,9 @@ public class WVJBWebViewClient extends WebViewClient {
 		String responseId = null;
 		Object responseData = null;
 	}
+
+	public interface JavascriptCallback {
+	    public void onReceiveValue(String value);
+	};
 
 }
