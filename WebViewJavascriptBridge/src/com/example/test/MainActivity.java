@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
 	class MyWebViewClient extends WVJBWebViewClient {
 		public MyWebViewClient(WebView webView) {
 
-			//֧��JS������ͨ��Ϣ
+			// support js send 
 			super(webView, new WVJBWebViewClient.WVJBHandler() {
 			
 				@Override
@@ -81,7 +81,7 @@ public class MainActivity extends Activity {
 			});
 			
 			/*
-			// ��֧��JS������ͨ��Ϣ
+			// not support js send
 			super(webView);
 			*/  
 			
