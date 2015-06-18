@@ -57,4 +57,4 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
   c. Android 4.4以下版本若不需要返回值则使用loadUrl方法执行脚本.
   
 
-  WebViewJavascriptBridge for iOS/OSX 的下载地址: https://github.com/jcccn/WebViewJavascriptBridge
+6. WebViewJavascriptBridge for iOS/OSX 的下载地址: https://github.com/marcuswestin/WebViewJavascriptBridge
