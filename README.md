@@ -40,7 +40,7 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
 4. 设置WebView
   webView.setWebViewClient(new MyWebViewClient(webView));  
 
-5. excuteJavascript 方法执行脚本:
+5. 用 excuteJavascript 方法执行脚本:
 
   excuteJavascript(script); //不需要返回值, script前不要加javascript:前缀
 
@@ -48,22 +48,25 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
  
   excuteJavascript(script, callback); //需要返回值, script前不要加javascript:前缀
 
-  当需要返回值时, Android 4.4及更高版本内部使用WebView.evaluateJavascript方法; 4.4以前版本则调用 mWebViewCore.stringByEvaluatingJavaScriptFromString 内部方法, 该方法要求Javascript方法必须能返回字符串.
-  (注:因为stringByEvaluatingJavaScriptFromString在三星手机上出错,已改用addJavascriptInterface方法实现)
+  executeJavascript方法的内部实现机制:
+  a. Android 4.4及更高版本下, 使用WebView.evaluateJavascript方法执行脚本;
+  b. Android 4.4以下版本若需要返回值则采用addJavascriptInterface机制实现;
+  c. Android 4.4以下版本若不需要返回值则使用loadUrl方法执行脚本.
   
-  如:
-  excuteJavascript("document.body.offsetHeight", new JavascriptCallback() {
-        public void onReceiveValue(String height) {
-           //错误, height=null
-        }
-  }); 
- excuteJavascript("eval(document.body.offsetHeight).toString()", new JavascriptCallback() {
-        public void onReceiveValue(String height) {
-           //正确
-        }
-  }); 
+  调用举例如:
+  需要返回值:
+  	excuteJavascript("document.body.offsetHeight", new JavascriptCallback() {
+        	public void onReceiveValue(String height) {
+           		//错误, height可能返回null
+        	}
+  	}); 
+  	excuteJavascript("eval(document.body.offsetHeight).toString()", new JavascriptCallback() {
+        	public void onReceiveValue(String height) {
+           		//正确
+        	}
+  	}); 
   
   不需要返回值时可以直接调用:
-  excuteJavascript("location.href='http://www.baidu.com/'”);
+  	excuteJavascript("location.href='http://www.baidu.com/'”);
 
   WebViewJavascriptBridge for iOS/OSX 的下载地址: https://github.com/jcccn/WebViewJavascriptBridge
