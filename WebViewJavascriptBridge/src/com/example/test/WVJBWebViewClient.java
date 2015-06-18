@@ -2,8 +2,6 @@ package com.example.test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +14,7 @@ import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -24,6 +23,7 @@ import android.webkit.WebViewClient;
 public class WVJBWebViewClient extends WebViewClient {
 	
 	private static final String kTag = "WVJB";
+	private static final String kInterface=kTag+"Interface";
 	private static final String kCustomProtocolScheme = "wvjbscheme";
 	private static final String kQueueHasMessage = "__WVJB_QUEUE_MESSAGE__";
 	
@@ -36,8 +36,9 @@ public class WVJBWebViewClient extends WebViewClient {
     private Map<String,WVJBHandler> messageHandlers = null;
     private long uniqueId=0;
     private WVJBHandler messageHandler;
-    private Method methodCallJavascript;
-    private Object browserFrame;
+//    private Method methodCallJavascript;
+//    private Object browserFrame;
+    private MyJavascriptInterface myInterface=new MyJavascriptInterface();
 
 	public interface WVJBResponseCallback {
 		public void callback(Object data);
@@ -54,6 +55,7 @@ public class WVJBWebViewClient extends WebViewClient {
     public WVJBWebViewClient(WebView webView, WVJBHandler messageHandler) {
     	this.webView = webView;
     	this.webView.getSettings().setJavaScriptEnabled(true);
+    	this.webView.addJavascriptInterface(myInterface, kInterface);
         this.responseCallbacks = new HashMap<String,WVJBResponseCallback>();
         this.messageHandlers = new HashMap<String,WVJBHandler>();
         this.startupMessageQueue = new ArrayList<WVJBMessage>();
@@ -271,14 +273,17 @@ public class WVJBWebViewClient extends WebViewClient {
             });
         } else {
         	if(callback!=null) {
-        		String value=stringByEvaluatingJavaScriptFromString(script);
-            	callback.onReceiveValue(value);
+        		myInterface.addCallback(++uniqueId+"", callback);
+        		webView.loadUrl("javascript:window."+kInterface+".onResultForScript("+uniqueId+","+script+")");
+        		//String value=stringByEvaluatingJavaScriptFromString(script);
+            	//callback.onReceiveValue(value);
         	} else {
             	webView.loadUrl("javascript:"+script);  		
         	}
         }
 	}
-	
+
+/*	
 	private String stringByEvaluatingJavaScriptFromString(String script) {
 		try {
         	if(browserFrame == null || methodCallJavascript == null) {
@@ -299,8 +304,8 @@ public class WVJBWebViewClient extends WebViewClient {
                 bf.setAccessible(true);
                 browserFrame = bf.get(webViewCore);
                 methodCallJavascript = browserFrame.getClass().getDeclaredMethod("stringByEvaluatingJavaScriptFromString",String.class);
+                methodCallJavascript.setAccessible(true);        		
         	}
-            methodCallJavascript.setAccessible(true);        		
             Object value = methodCallJavascript.invoke(browserFrame, script);
             return String.valueOf(value);
         } catch (Exception e) {
@@ -308,7 +313,7 @@ public class WVJBWebViewClient extends WebViewClient {
         }
         return null;
     }
-    
+ */   
     @Override
 	public void onPageFinished(WebView view, String url) {
     	try {  
@@ -351,6 +356,21 @@ public class WVJBWebViewClient extends WebViewClient {
 		Object responseData = null;
 	}
 
+	private class MyJavascriptInterface {
+		Map<String,JavascriptCallback> map=new HashMap<String,JavascriptCallback>();
+
+		public void addCallback(String key, JavascriptCallback callback) {
+			map.put(key, callback);
+		}
+		
+		@JavascriptInterface
+		public void onResultForScript(String key, String value) {
+        	Log.i(kTag, "onResultForScript: "+ value);
+    		JavascriptCallback callback=map.remove(key);
+			if(callback!=null) callback.onReceiveValue(value);
+		}
+	}
+	
 	public interface JavascriptCallback {
 	    public void onReceiveValue(String value);
 	};
