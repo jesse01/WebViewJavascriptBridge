@@ -8,6 +8,7 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
 3. 子类化 WVJBWebViewClient, 例如:
 
   class MyWebViewClient extends WVJBWebViewClient {
+  
 		public MyWebViewClient(WebView webView) {
 
 			//需要支持JS send 方法时
@@ -47,7 +48,8 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
  
   excuteJavascript(script, callback); //需要返回值, script前不要加javascript:前缀
 
-  当需要返回值时, Android 4.4及更高版本使用WebView.evaluateJavascript方法; 4.4以前版本调用 mWebViewCore.stringByEvaluatingJavaScriptFromString 内部方法, 该方法要求Javascript方法必须能返回字符串. 
+  当需要返回值时, Android 4.4及更高版本内部使用WebView.evaluateJavascript方法; 4.4以前版本则调用 mWebViewCore.stringByEvaluatingJavaScriptFromString 内部方法, 该方法要求Javascript方法必须能返回字符串.
+  (注:因为stringByEvaluatingJavaScriptFromString在三星手机上出错,已改用addJavascriptInterface方法实现)
   
   如:
   excuteJavascript("document.body.offsetHeight", new JavascriptCallback() {
@@ -64,7 +66,4 @@ WebViewJavascriptBridge for Android 是 WebViewJavascriptBridge for iOS/OSX的An
   不需要返回值时可以直接调用:
   excuteJavascript("location.href='http://www.baidu.com/'”);
 
-  Android 4.4及更高版本使用WebView.evaluateJavascript方法, 低于4.4版本使用WebView.loadUrl()方法
-
-  
   WebViewJavascriptBridge for iOS/OSX 的下载地址: https://github.com/jcccn/WebViewJavascriptBridge
