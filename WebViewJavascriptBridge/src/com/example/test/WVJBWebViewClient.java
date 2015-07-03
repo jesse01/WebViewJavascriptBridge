@@ -12,7 +12,6 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
-import android.os.Looper;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -126,19 +125,8 @@ public class WVJBWebViewClient extends WebViewClient {
 
 		log("SEND", messageJSON);
 
-		if (Looper.myLooper() == Looper.getMainLooper()) {
-			executeJavascript("WebViewJavascriptBridge._handleMessageFromObjC('"
-					+ messageJSON + "');");
-		} else {
-			final String msgString = messageJSON;
-			new Runnable() {
-				@Override
-				public void run() {
-					executeJavascript("WebViewJavascriptBridge._handleMessageFromObjC('"
-							+ msgString + "');");
-				}
-			};
-		}
+		executeJavascript("WebViewJavascriptBridge._handleMessageFromObjC('"
+				+ messageJSON + "');");
 	}
 
 	private JSONObject message2JSONObject(WVJBMessage message) {
