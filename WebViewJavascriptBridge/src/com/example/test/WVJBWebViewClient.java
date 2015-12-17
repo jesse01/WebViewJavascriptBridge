@@ -260,7 +260,7 @@ public class WVJBWebViewClient extends WebViewClient {
 						if (value != null && value.startsWith("\"")
 								&& value.endsWith("\"")) {
 							value = value.substring(1, value.length() - 1)
-									.replaceAll("\\\\", "");
+									.replaceAll("\\\\(?!u)", "");
 						}
 						callback.onReceiveValue(value);
 					}
